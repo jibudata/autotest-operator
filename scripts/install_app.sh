@@ -1,5 +1,5 @@
 kubectl create namespace application
-kubectl -n application apply -f ./mysql-deployment.yaml
+kubectl -n application apply -f ../config/mysql-deployment.yaml
 sleep 20
-kubectl -n application apply -f ./autotest.yaml
-kubectl -n application apply -f ./nginx-deployment.yaml
+kubectl -n application apply -f ../config/autotest.yaml
+kubectl -n application apply -f ../config/nginx-deployment.yaml
