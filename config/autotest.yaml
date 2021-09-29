@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: autotest-deployment
+  labels:
+    app: autotestapp
+spec:
+  replicas: 3 
+  selector:
+    matchLabels:
+      app: autotestapp
+  serviceName: autotest-svc
+  template:
+    metadata:
+      labels:
+        app: autotestapp
+    spec:
+      containers:
+      - name: autotestapp
+        image: jibutech/app-test:main-latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: AUTO_TEST_HOST
+          value: autotest-mysql
+        volumeMounts:
+        - name: autotest-persistent-storage
+          mountPath: /tmp/jibu/testpod/upload
+      volumes:
+      - name: autotest-persistent-storage
+        persistentVolumeClaim:
+          claimName: autotest-pv-claim
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: autotest-svc
+spec:
+  ports:
+    - nodePort: 30176
+      protocol: TCP
+      port: 2581
+      targetPort: 2581
+  selector:
+    app: autotestapp
+  type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: autotest-pv-claim
+  labels:
+    app: autotestapp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  #storageClassName: rook-ceph-block
+  storageClassName: managed-nfs-storage
+  resources:
+    requests:
+      storage: 10Gi
