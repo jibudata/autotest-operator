@@ -26,10 +26,18 @@ spec:
         volumeMounts:
         - name: autotest-persistent-storage
           mountPath: /tmp/jibu/testpod/upload
-      volumes:
-      - name: autotest-persistent-storage
-        persistentVolumeClaim:
-          claimName: autotest-pv-claim
+  volumeClaimTemplates:               #this will be used to create PVC
+  - metadata:
+      name: autotest-persistent-storage
+      labels:
+        app: autotestapp
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      #storageClassName: rook-ceph-block
+      storageClassName: managed-nfs-storage
+      resources:
+        requests:
+          storage: 10Gi 
 ---
 kind: Service
 apiVersion: v1
@@ -44,18 +52,3 @@ spec:
   selector:
     app: autotestapp
   type: NodePort
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: autotest-pv-claim
-  labels:
-    app: autotestapp
-spec:
-  accessModes:
-    - ReadWriteOnce
-  #storageClassName: rook-ceph-block
-  storageClassName: managed-nfs-storage
-  resources:
-    requests:
-      storage: 10Gi
