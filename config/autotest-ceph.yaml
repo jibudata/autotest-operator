@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: autotest-deployment
+  labels:
+    app: autotestapp
+spec:
+  replicas: 2 
+  selector:
+    matchLabels:
+      app: autotestapp
+  serviceName: autotest-svc
+  template:
+    metadata:
+      labels:
+        app: autotestapp
+    spec:
+      initContainers:
+      - name: init-mysql
+        image: busybox:latest
+        command: ['sh', '-c', 'echo -e "Checking MySQL"; while ! nc -z autotest-mysql 3306; do sleep 1; printf "-"; done; echo -e "  >> MySQL started";']
+      containers:
+      - name: autotestapp
+        image: jibutech/app-test:main-latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: AUTO_TEST_HOST
+          value: autotest-mysql
+        volumeMounts:
+        - name: autotest-persistent-storage
+          mountPath: /tmp/jibu/testpod/upload
+  volumeClaimTemplates:               #this will be used to create PVC
+  - metadata:
+      name: autotest-persistent-storage
+      labels:
+        app: autotestapp
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rook-ceph-block
+      #storageClassName: managed-nfs-storage
+      resources:
+        requests:
+          storage: 4Gi 
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: autotest-svc
+spec:
+  ports:
+    - nodePort: 30176
+      protocol: TCP
+      port: 2581
+      targetPort: 2581
+  selector:
+    app: autotestapp
+  type: NodePort
