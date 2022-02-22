@@ -5,7 +5,7 @@ metadata:
   labels:
     app: autotestapp
 spec:
-  replicas: 3 
+  replicas: 2 
   selector:
     matchLabels:
       app: autotestapp
@@ -41,7 +41,7 @@ spec:
       storageClassName: managed-nfs-storage
       resources:
         requests:
-          storage: 10Gi 
+          storage: 4Gi 
 ---
 kind: Service
 apiVersion: v1
